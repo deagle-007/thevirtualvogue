@@ -11,33 +11,39 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
     const category = searchParams.get("category");
 
-    // ✅ Build MongoDB filter dynamically
+    // ✅ Build MongoDB filter dynamically with proper checks
     const filter: Record<string, any> = {};
-    if (email) filter.email = email;
-    if (category) filter.category = category;
 
-    // ✅ Fetch filtered products
+    // Safe check for email and category before using .startsWith()
+    if (email && typeof email === "string" && email.trim() !== "") {
+      filter.email = email;
+    }
+
+    if (category && typeof category === "string" && category.trim() !== "") {
+      filter.category = category;
+    }
+
+    // ✅ Fetch filtered products from MongoDB
     const products = await db.collection("products").find(filter).toArray();
 
-    // ✅ Transform to structured format
+    // ✅ Transform products to structured format
     const formattedProducts: Record<string, any[]> = {};
 
-    products.forEach(
-      ({ category, id, name, price, image, description, email }) => {
-        if (!formattedProducts[category]) {
-          formattedProducts[category] = [];
-        }
-        formattedProducts[category].push({
-          id,
-          name,
-          price,
-          image,
-          description,
-          email, // optional: useful for debug
-        });
+    products.forEach(({ category, id, name, price, image, description, email }) => {
+      if (!formattedProducts[category]) {
+        formattedProducts[category] = [];
       }
-    );
+      formattedProducts[category].push({
+        id,
+        name,
+        price,
+        image,
+        description,
+        email, // Optional, useful for debugging
+      });
+    });
 
+    // Return the formatted products as a JSON response
     return NextResponse.json(formattedProducts);
   } catch (error) {
     console.error("❌ Error fetching products:", error);
