@@ -64,13 +64,15 @@ const UploadFit = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
+          width: { ideal: 720 },
+          height: { ideal: 1280 },
           aspectRatio: 9 / 16,
-          width: { ideal: 480 },
-          height: { ideal: 720 },
         },
+        audio: false,
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true"); // prevent fullscreen on iOS
         videoRef.current.onloadedmetadata = () => videoRef.current?.play();
       }
     } catch (err) {
@@ -115,7 +117,7 @@ const UploadFit = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
-      setSelectedImage(result); // Don't redirect yet
+      setSelectedImage(result);
     };
     reader.readAsDataURL(file);
   };
@@ -125,20 +127,24 @@ const UploadFit = () => {
     const video = videoRef.current;
     if (video.readyState < 2 || video.paused) return;
 
+    const portraitWidth = 720;
+    const portraitHeight = 1280;
+
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = portraitWidth;
+    canvas.height = portraitHeight;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.translate(portraitWidth, 0);
+    ctx.scale(-1, 1); // Mirror the image
+    ctx.drawImage(video, 0, 0, portraitWidth, portraitHeight);
     ctx.restore();
 
     const dataURL = canvas.toDataURL("image/jpeg");
-    setSelectedImage(dataURL); // Just store it
+    setSelectedImage(dataURL);
     stopCamera();
     setShowCamera(false);
   };
@@ -302,7 +308,6 @@ const UploadFit = () => {
   );
 };
 
-// Wrap the component with Suspense for CSR handling
 const SuspenseWrapper = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
