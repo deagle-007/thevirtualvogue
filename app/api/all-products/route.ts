@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
     const category = searchParams.get("category");
 
+    // Log both email and category to ensure they are not undefined or null
+    console.log("Received email:", email);   // Add this logging
+    console.log("Received category:", category);  // Add this logging
+
     // ✅ Build MongoDB filter dynamically with proper checks
     const filter: Record<string, any> = {};
 
