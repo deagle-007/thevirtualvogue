@@ -64,15 +64,12 @@ const UploadFit = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: 9 / 16,
         },
         audio: false,
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true"); // prevent fullscreen on iOS
+        videoRef.current.setAttribute("playsinline", "true"); // important for iOS
         videoRef.current.onloadedmetadata = () => videoRef.current?.play();
       }
     } catch (err) {
@@ -127,20 +124,20 @@ const UploadFit = () => {
     const video = videoRef.current;
     if (video.readyState < 2 || video.paused) return;
 
-    const portraitWidth = 720;
-    const portraitHeight = 1280;
+    const realWidth = video.videoWidth;
+    const realHeight = video.videoHeight;
 
     const canvas = document.createElement("canvas");
-    canvas.width = portraitWidth;
-    canvas.height = portraitHeight;
+    canvas.width = realWidth;
+    canvas.height = realHeight;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.save();
-    ctx.translate(portraitWidth, 0);
-    ctx.scale(-1, 1); // Mirror the image
-    ctx.drawImage(video, 0, 0, portraitWidth, portraitHeight);
+    ctx.translate(realWidth, 0);
+    ctx.scale(-1, 1); // Mirror
+    ctx.drawImage(video, 0, 0, realWidth, realHeight);
     ctx.restore();
 
     const dataURL = canvas.toDataURL("image/jpeg");
