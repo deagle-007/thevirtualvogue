@@ -10,7 +10,7 @@ import {
   Users,
   X,
   ArrowRight,
-} from "lucide-react"; // No more Repeat icon needed
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import "../../styles/globals.css";
@@ -34,6 +34,7 @@ const UploadFit = () => {
   const [modelImages, setModelImages] = useState<string[]>([]);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isMobile, setIsMobile] = useState(false);
+  const lastTapRef = useRef<number>(0); // For double tap detection
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,19 +46,11 @@ const UploadFit = () => {
 
   useEffect(() => {
     if (gender && category) {
-      if (gender === "male") {
-        setModelImages([
-          "/models/image1.jpg",
-          "/models/image2.jpg",
-          "/models/image3.jpg",
-        ]);
-      } else if (gender === "female") {
-        setModelImages([
-          "/models/image4.jpg",
-          "/models/image5.jpg",
-          "/models/image6.jpg",
-        ]);
-      }
+      setModelImages(
+        gender === "male"
+          ? ["/models/image1.jpg", "/models/image2.jpg", "/models/image3.jpg"]
+          : ["/models/image4.jpg", "/models/image5.jpg", "/models/image6.jpg"]
+      );
     }
   }, [gender, category]);
 
@@ -76,7 +69,7 @@ const UploadFit = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: facingMode,
+          facingMode,
         },
         audio: false,
       });
@@ -103,18 +96,11 @@ const UploadFit = () => {
     const newMode = facingMode === "user" ? "environment" : "user";
     stopCamera();
     setFacingMode(newMode);
-
-    if (navigator.vibrate) {
-      navigator.vibrate(100);
-    }
+    if (navigator.vibrate) navigator.vibrate(100);
   };
 
   const handleImageSelect = (imageData: string) => {
-    if (!gender || !category) {
-      alert("Missing gender or category.");
-      return;
-    }
-
+    if (!gender || !category) return alert("Missing gender or category.");
     fetch(imageData)
       .then((res) => res.blob())
       .then((blob) => {
@@ -126,43 +112,32 @@ const UploadFit = () => {
   };
 
   const handleContinue = () => {
-    if (selectedImage) {
-      handleImageSelect(selectedImage);
-    }
+    if (selectedImage) handleImageSelect(selectedImage);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setSelectedImage(result);
-    };
+    reader.onloadend = () => setSelectedImage(reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const takePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
-    if (video.readyState < 2 || video.paused) return;
-
-    const realWidth = video.videoWidth;
-    const realHeight = video.videoHeight;
-
     const canvas = document.createElement("canvas");
-    canvas.width = realWidth;
-    canvas.height = realHeight;
-
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     ctx.save();
-    ctx.translate(realWidth, 0);
+    ctx.translate(width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, realWidth, realHeight);
+    ctx.drawImage(video, 0, 0, width, height);
     ctx.restore();
-
     const dataURL = canvas.toDataURL("image/jpeg");
     setSelectedImage(dataURL);
     stopCamera();
@@ -206,9 +181,12 @@ const UploadFit = () => {
           {showCamera ? (
             <div
               className="relative w-[260px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden"
-              onDoubleClick={() => {
-                toggleCamera();
-                if (navigator.vibrate) navigator.vibrate(100);
+              onTouchStart={() => {
+                const now = Date.now();
+                if (now - lastTapRef.current < 300) {
+                  toggleCamera();
+                }
+                lastTapRef.current = now;
               }}
             >
               <video
@@ -217,13 +195,11 @@ const UploadFit = () => {
                 playsInline
                 className="w-full h-full object-cover transform scale-x-[-1]"
               />
-
               {isMobile && (
                 <div className="absolute bottom-16 w-full text-center text-xs text-white opacity-70">
                   Double Tap to Switch Camera
                 </div>
               )}
-
               {countdown !== null && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <div className="text-white text-5xl font-bold">
@@ -304,3 +280,46 @@ const UploadFit = () => {
           )}
         </div>
       </div>
+
+      {showModelPopup && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-xl w-[90%] max-w-xl relative">
+            <button
+              onClick={() => setShowModelPopup(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+            >
+              <X />
+            </button>
+            <h2 className="text-center font-bold text-lg mb-4">
+              Choose a Model
+            </h2>
+            <div className="grid grid-cols-3 gap-6">
+              {modelImages.map((img, idx) => (
+                <Image
+                  key={idx}
+                  src={img}
+                  alt={`Model ${idx + 1}`}
+                  width={200}
+                  height={300}
+                  className="rounded-2xl cursor-pointer transition-transform duration-300 ease-in-out transform hover:scale-110 shadow-md"
+                  onClick={() => {
+                    setSelectedImage(img);
+                    setShowModelPopup(false);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SuspenseWrapper = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <UploadFit />
+  </Suspense>
+);
+
+export default SuspenseWrapper;
