@@ -68,7 +68,11 @@ const UploadFit = () => {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
+        video: {
+          facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: false,
       });
       if (videoRef.current) {
@@ -137,12 +141,12 @@ const UploadFit = () => {
     ctx.save();
     if (facingMode === "user") {
       ctx.translate(width, 0);
-      ctx.scale(-1, 1); // Flip horizontally only for front camera
+      ctx.scale(-1, 1); // Mirror only front camera
     }
     ctx.drawImage(video, 0, 0, width, height);
     ctx.restore();
 
-    const dataURL = canvas.toDataURL("image/jpeg");
+    const dataURL = canvas.toDataURL("image/jpeg", 1.0); // Highest quality
     setSelectedImage(dataURL);
     stopCamera();
     setShowCamera(false);
@@ -287,6 +291,7 @@ const UploadFit = () => {
         </div>
       </div>
 
+      {/* Model Picker */}
       {showModelPopup && (
         <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-xl w-[90%] max-w-xl relative">
