@@ -11,7 +11,7 @@ import {
   X,
   ArrowRight,
   Repeat,
-} from "lucide-react"; // ✅ Import Flip Icon
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import "../../styles/globals.css";
@@ -33,8 +33,8 @@ const UploadFit = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showModelPopup, setShowModelPopup] = useState(false);
   const [modelImages, setModelImages] = useState<string[]>([]);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user"); // ✅ Front or Back
-  const [isMobile, setIsMobile] = useState(false); // ✅ Check if Mobile
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [isMobile, setIsMobile] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -63,12 +63,14 @@ const UploadFit = () => {
   }, [gender, category]);
 
   useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor;
-    setIsMobile(/android|iphone|ipad|ipod/i.test(userAgent));
+    if (typeof navigator !== "undefined") {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      setIsMobile(/android|iphone|ipad|ipod/i.test(userAgent));
+    }
   }, []);
 
   useEffect(() => {
-    if (showCamera) startCamera(); // Restart camera if facingMode changes
+    if (showCamera) startCamera();
   }, [facingMode]);
 
   const startCamera = async () => {
@@ -103,7 +105,6 @@ const UploadFit = () => {
     stopCamera();
     setFacingMode(newMode);
 
-    // ✅ Vibrate a little on mobile
     if (navigator.vibrate) {
       navigator.vibrate(100);
     }
@@ -159,7 +160,7 @@ const UploadFit = () => {
 
     ctx.save();
     ctx.translate(realWidth, 0);
-    ctx.scale(-1, 1); // Mirror
+    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, realWidth, realHeight);
     ctx.restore();
 
@@ -212,12 +213,11 @@ const UploadFit = () => {
                 className="w-full h-full object-cover transform scale-x-[-1]"
               />
 
-              {/* ✅ Flip Camera Button only for mobile */}
               {isMobile && (
                 <Button
                   onClick={toggleCamera}
                   size="icon"
-                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full z-10"
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full z-20"
                   variant="ghost"
                 >
                   <Repeat className="w-5 h-5" />
