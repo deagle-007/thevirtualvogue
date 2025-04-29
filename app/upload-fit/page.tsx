@@ -10,7 +10,8 @@ import {
   Users,
   X,
   ArrowRight,
-} from "lucide-react";
+  Repeat,
+} from "lucide-react"; // Added Repeat icon for flip
 import { Button } from "@/components/ui/button";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import "../../styles/globals.css";
@@ -32,14 +33,25 @@ const UploadFit = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showModelPopup, setShowModelPopup] = useState(false);
   const [modelImages, setModelImages] = useState<string[]>([]);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [isMobile, setIsMobile] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor;
+    setIsMobile(/android|iphone|ipad/i.test(userAgent));
+  }, []);
+
+  useEffect(() => {
     if (showCamera) startCamera();
     return () => stopCamera();
   }, [showCamera]);
+
+  useEffect(() => {
+    if (showCamera) startCamera(); // Auto restart when facingMode changes
+  }, [facingMode]);
 
   useEffect(() => {
     if (gender && category) {
@@ -63,7 +75,7 @@ const UploadFit = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode,
         },
         audio: false,
       });
@@ -84,6 +96,12 @@ const UploadFit = () => {
       stream.getTracks().forEach((track) => track.stop());
       video.srcObject = null;
     }
+  };
+
+  const toggleCamera = () => {
+    const newMode = facingMode === "user" ? "environment" : "user";
+    stopCamera();
+    setFacingMode(newMode);
   };
 
   const handleImageSelect = (imageData: string) => {
@@ -182,6 +200,16 @@ const UploadFit = () => {
         <div className="w-full max-w-md bg-[#D9D9D9] rounded-3xl p-6 shadow-lg">
           {showCamera ? (
             <div className="relative w-[260px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden">
+              {isMobile && (
+                <Button
+                  onClick={toggleCamera}
+                  variant="ghost"
+                  className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
+                  size="icon"
+                >
+                  <Repeat className="w-5 h-5" />
+                </Button>
+              )}
               <video
                 ref={videoRef}
                 autoPlay
