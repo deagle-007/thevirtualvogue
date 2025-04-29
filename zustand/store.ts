@@ -28,9 +28,9 @@ type AppState = {
 export const useAppStore = create<AppState>((set) => ({
   garment_image: null,
   human_image: null,
-  garment_description: "brown top of female etc",
+  garment_description: "",
   category: "upper_body",
-  denoise_steps: 20,
+  denoise_steps: 50,
   seed: 42,
   number_of_images: 1,
   generated_image: null,
