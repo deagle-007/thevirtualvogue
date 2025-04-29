@@ -34,7 +34,7 @@ const UploadFit = () => {
   const [modelImages, setModelImages] = useState<string[]>([]);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isMobile, setIsMobile] = useState(false);
-  const lastTapRef = useRef<number>(0); // For double tap detection
+  const lastTapRef = useRef<number>(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -68,9 +68,7 @@ const UploadFit = () => {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-        },
+        video: { facingMode },
         audio: false,
       });
       if (videoRef.current) {
@@ -126,18 +124,24 @@ const UploadFit = () => {
   const takePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
-    const canvas = document.createElement("canvas");
     const width = video.videoWidth;
     const height = video.videoHeight;
+
+    const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
     ctx.save();
-    ctx.translate(width, 0);
-    ctx.scale(-1, 1);
+    if (facingMode === "user") {
+      ctx.translate(width, 0);
+      ctx.scale(-1, 1); // Flip horizontally only for front camera
+    }
     ctx.drawImage(video, 0, 0, width, height);
     ctx.restore();
+
     const dataURL = canvas.toDataURL("image/jpeg");
     setSelectedImage(dataURL);
     stopCamera();
@@ -193,7 +197,9 @@ const UploadFit = () => {
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full h-full object-cover transform scale-x-[-1]"
+                className={`w-full h-full object-cover ${
+                  facingMode === "user" ? "transform scale-x-[-1]" : ""
+                }`}
               />
               {isMobile && (
                 <div className="absolute bottom-16 w-full text-center text-xs text-white opacity-70">
