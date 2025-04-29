@@ -11,7 +11,7 @@ import {
   X,
   ArrowRight,
   Repeat,
-} from "lucide-react"; // Added Repeat icon for flip
+} from "lucide-react"; // ✅ Import Flip Icon
 import { Button } from "@/components/ui/button";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import "../../styles/globals.css";
@@ -33,25 +33,16 @@ const UploadFit = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showModelPopup, setShowModelPopup] = useState(false);
   const [modelImages, setModelImages] = useState<string[]>([]);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
-  const [isMobile, setIsMobile] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user"); // ✅ Front or Back
+  const [isMobile, setIsMobile] = useState(false); // ✅ Check if Mobile
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor;
-    setIsMobile(/android|iphone|ipad/i.test(userAgent));
-  }, []);
-
-  useEffect(() => {
     if (showCamera) startCamera();
     return () => stopCamera();
   }, [showCamera]);
-
-  useEffect(() => {
-    if (showCamera) startCamera(); // Auto restart when facingMode changes
-  }, [facingMode]);
 
   useEffect(() => {
     if (gender && category) {
@@ -71,17 +62,26 @@ const UploadFit = () => {
     }
   }, [gender, category]);
 
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor;
+    setIsMobile(/android|iphone|ipad|ipod/i.test(userAgent));
+  }, []);
+
+  useEffect(() => {
+    if (showCamera) startCamera(); // Restart camera if facingMode changes
+  }, [facingMode]);
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode,
+          facingMode: facingMode,
         },
         audio: false,
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute("playsinline", "true"); // important for iOS
+        videoRef.current.setAttribute("playsinline", "true");
         videoRef.current.onloadedmetadata = () => videoRef.current?.play();
       }
     } catch (err) {
@@ -102,6 +102,11 @@ const UploadFit = () => {
     const newMode = facingMode === "user" ? "environment" : "user";
     stopCamera();
     setFacingMode(newMode);
+
+    // ✅ Vibrate a little on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
   };
 
   const handleImageSelect = (imageData: string) => {
@@ -200,22 +205,25 @@ const UploadFit = () => {
         <div className="w-full max-w-md bg-[#D9D9D9] rounded-3xl p-6 shadow-lg">
           {showCamera ? (
             <div className="relative w-[260px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden">
-              {isMobile && (
-                <Button
-                  onClick={toggleCamera}
-                  variant="ghost"
-                  className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
-                  size="icon"
-                >
-                  <Repeat className="w-5 h-5" />
-                </Button>
-              )}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 className="w-full h-full object-cover transform scale-x-[-1]"
               />
+
+              {/* ✅ Flip Camera Button only for mobile */}
+              {isMobile && (
+                <Button
+                  onClick={toggleCamera}
+                  size="icon"
+                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full z-10"
+                  variant="ghost"
+                >
+                  <Repeat className="w-5 h-5" />
+                </Button>
+              )}
+
               {countdown !== null && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <div className="text-white text-5xl font-bold">
