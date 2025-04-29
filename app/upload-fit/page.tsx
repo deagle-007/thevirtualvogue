@@ -10,8 +10,7 @@ import {
   Users,
   X,
   ArrowRight,
-  Repeat,
-} from "lucide-react";
+} from "lucide-react"; // No more Repeat icon needed
 import { Button } from "@/components/ui/button";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import "../../styles/globals.css";
@@ -205,7 +204,13 @@ const UploadFit = () => {
       <div className="container mx-auto px-4 pt-4 flex flex-col items-center justify-center">
         <div className="w-full max-w-md bg-[#D9D9D9] rounded-3xl p-6 shadow-lg">
           {showCamera ? (
-            <div className="relative w-[260px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden">
+            <div
+              className="relative w-[260px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden"
+              onDoubleClick={() => {
+                toggleCamera();
+                if (navigator.vibrate) navigator.vibrate(100);
+              }}
+            >
               <video
                 ref={videoRef}
                 autoPlay
@@ -214,14 +219,9 @@ const UploadFit = () => {
               />
 
               {isMobile && (
-                <Button
-                  onClick={toggleCamera}
-                  size="icon"
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full z-20"
-                  variant="ghost"
-                >
-                  <Repeat className="w-5 h-5" />
-                </Button>
+                <div className="absolute bottom-16 w-full text-center text-xs text-white opacity-70">
+                  Double Tap to Switch Camera
+                </div>
               )}
 
               {countdown !== null && (
@@ -304,49 +304,3 @@ const UploadFit = () => {
           )}
         </div>
       </div>
-
-      {/* Model Picker */}
-      {showModelPopup && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-xl w-[90%] max-w-xl relative">
-            <button
-              onClick={() => setShowModelPopup(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-black"
-            >
-              <X />
-            </button>
-            <h2 className="text-center font-bold text-lg mb-4">
-              Choose a Model
-            </h2>
-            <div className="grid grid-cols-3 gap-6">
-              {modelImages.map((img, idx) => (
-                <Image
-                  key={idx}
-                  src={img}
-                  alt={`Model ${idx + 1}`}
-                  width={200}
-                  height={300}
-                  className="rounded-2xl cursor-pointer transition-transform duration-300 ease-in-out transform hover:scale-110 shadow-md"
-                  onClick={() => {
-                    setSelectedImage(img);
-                    setShowModelPopup(false);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const SuspenseWrapper = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <UploadFit />
-    </Suspense>
-  );
-};
-
-export default SuspenseWrapper;
