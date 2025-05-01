@@ -26,35 +26,33 @@ export default function AllItems() {
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categoryKey = `${gender} ${slug}`;
+  const categoryKey = ${gender} ${slug};
   const userEmail = user?.email;
-
-  // ✅ Using correct Auth0 custom claim domain
   const roles: string[] = Array.isArray(
     user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
   )
     ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
     : [];
-
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (isAdmin) {
+    if (isAdmin && userEmail) {
+      const fetchAdminProducts = async () => {
         try {
-          const response = await fetch(`/api/products?category=${categoryKey}`);
+          const response = await fetch(/api/products?category=${categoryKey});
           const data = await response.json();
-          setCategoryProducts(data); // ✅ Admin sees all products in category
+          const filtered = data.filter((p: any) => p.email === userEmail);
+          setCategoryProducts(filtered);
         } catch (err) {
           console.error("Failed to load admin products:", err);
           setCategoryProducts([]);
         }
-      } else {
-        setCategoryProducts(staticProducts[categoryKey] || []);
-      }
-    };
-    fetchProducts();
-  }, [categoryKey, isAdmin]);
+      };
+      fetchAdminProducts();
+    } else {
+      setCategoryProducts(staticProducts[categoryKey] || []);
+    }
+  }, [categoryKey, isAdmin, userEmail]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -75,8 +73,6 @@ export default function AllItems() {
   };
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
-    loop: true,
-    mode: "snap",
     slides: {
       perView: 1,
       spacing: 15,
@@ -89,12 +85,10 @@ export default function AllItems() {
         slides: { perView: 3, spacing: 25 },
       },
       "(min-width: 1024px)": {
-        slides: { perView: 4, spacing: 25 },
-      },
-      "(min-width: 1280px)": {
-        slides: { perView: 5, spacing: 25 },
+        slides: { perView: 3, spacing: 30 },
       },
     },
+    loop: true,
   });
 
   if (routeLoading || userLoading) return <Loader />;
@@ -166,7 +160,7 @@ export default function AllItems() {
         </div>
 
         {/* Carousel Section */}
-        <div className="relative w-full overflow-hidden max-w-screen-xl mx-auto">
+        <div className="relative w-full">
           {/* Left Arrow */}
           <button
             onClick={() => instanceRef.current?.prev()}
@@ -184,18 +178,15 @@ export default function AllItems() {
           </button>
 
           {/* Carousel */}
-          <div
-            ref={sliderRef}
-            className="keen-slider px-4 md:px-8 lg:px-12"
-          >
+          <div ref={sliderRef} className="keen-slider px-6 md:px-16">
             {categoryProducts.map((product) => {
               const id = product._id?.toString() || product.id;
               return (
                 <div
                   key={id}
-                  className="keen-slider__slide flex-shrink-0 w-[180px] flex flex-col items-center"
+                  className="keen-slider__slide min-w-0 flex flex-col items-center"
                 >
-                  <Link href={`/items/${gender}/${slug}/${id}`}>
+                  <Link href={/items/${gender}/${slug}/${id}}>
                     <div className="bg-[#EDEDED] w-[160px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
                       <Image
                         src={product.image}
