@@ -4,70 +4,56 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Upload, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import ProtectedNavbar from "@/components/global/protectednavbar";
 import useProtectedRoute from "@/hooks/useProtectedRoute";
 import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/zustand/store";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import "keen-slider/keen-slider.min.css";
-import { useKeenSlider } from "keen-slider/react";
+
+// Static fallback catalogue
 import { products as staticProducts } from "@/data/product-data";
 
 export default function AllItems() {
   const router = useRouter();
   const { gender, slug } = useParams();
-  const { setGarmentImage, category, setCategory } = useAppStore();
+  const { setGarmentImage } = useAppStore();
   const { isLoading: routeLoading } = useProtectedRoute();
   const { user, isLoading: userLoading } = useUser();
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categoryKey = `${gender} ${slug}`;
+  const userEmail = user?.email;
+  const roles: string[] = Array.isArray(
+    user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
+  )
+    ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
+    : [];
+  const isAdmin = roles.includes("admin");
 
-  // ✅ Restore Zustand category state from URL if missing
   useEffect(() => {
-    if (!category && slug) {
-      setCategory(slug);
-    }
-  }, [category, slug, setCategory]);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (!userLoading && user) {
-        const userEmail = user.email;
-        const roles: string[] = Array.isArray(
-          user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
-        )
-          ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
-          : [];
-
-        const isAdmin = roles.includes("admin");
-
-        if (isAdmin && userEmail) {
-          try {
-            const response = await fetch(`/api/products?category=${categoryKey}`);
-            const data = await response.json();
-            const filtered = data.filter((p: any) => p.email === userEmail);
-            setCategoryProducts(filtered);
-          } catch (err) {
-            console.error("Failed to load admin products:", err);
-            setCategoryProducts([]);
-          }
-        } else {
-          setCategoryProducts(staticProducts[categoryKey] || []);
+    if (isAdmin && userEmail) {
+      const fetchAdminProducts = async () => {
+        try {
+          const response = await fetch(`/api/products?category=${categoryKey}`);
+          const data = await response.json();
+          const filtered = data.filter((p: any) => p.email === userEmail);
+          setCategoryProducts(filtered);
+        } catch (err) {
+          console.error("Failed to load admin products:", err);
+          setCategoryProducts([]);
         }
-
-        setLoadingProducts(false);
-      }
-    };
-
-    fetchProducts();
-  }, [userLoading, user, categoryKey]);
+      };
+      fetchAdminProducts();
+    } else {
+      // fallback to static products
+      setCategoryProducts(staticProducts[categoryKey] || []);
+    }
+  }, [categoryKey, isAdmin, userEmail]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,32 +73,12 @@ export default function AllItems() {
       });
   };
 
-  const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
-    slides: {
-      perView: 1,
-      spacing: 15,
-    },
-    breakpoints: {
-      "(min-width: 640px)": {
-        slides: { perView: 2, spacing: 20 },
-      },
-      "(min-width: 768px)": {
-        slides: { perView: 3, spacing: 25 },
-      },
-      "(min-width: 1024px)": {
-        slides: { perView: 3, spacing: 30 },
-      },
-    },
-    loop: true,
-  });
-
-  if (routeLoading || userLoading || loadingProducts) return <Loader />;
+  if (routeLoading || userLoading) return <Loader />;
 
   return (
     <div className="min-h-screen bg-white">
       <ProtectedNavbar />
       <div className="container mx-auto px-4 py-8">
-        {/* Top Bar */}
         <div className="flex items-center justify-center space-x-4 mb-8">
           <button
             onClick={() => router.back()}
@@ -174,53 +140,33 @@ export default function AllItems() {
           </div>
         </div>
 
-        {/* Carousel Section */}
-        <div className="relative w-full">
-          {/* Left Arrow */}
-          <button
-            onClick={() => instanceRef.current?.prev()}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white text-black rounded-full p-2 shadow-md hover:scale-110 transition"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
-          {/* Right Arrow */}
-          <button
-            onClick={() => instanceRef.current?.next()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white text-black rounded-full p-2 shadow-md hover:scale-110 transition"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-
-          {/* Carousel */}
-          <div ref={sliderRef} className="keen-slider px-6 md:px-16">
-            {categoryProducts.map((product) => {
-              const id = product._id?.toString() || product.id;
-              return (
-                <div
-                  key={id}
-                  className="keen-slider__slide min-w-0 flex flex-col items-center"
-                >
-                  <Link href={`/items/${gender}/${slug}/${id}`}>
-                    <div className="bg-[#EDEDED] w-[160px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={150}
-                        height={190}
-                        className="object-contain bg-transparent transform group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="mt-2 text-center">
-                      <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-gray-600 transition bebas-font">
-                        {product.name}
-                      </h3>
-                    </div>
-                  </Link>
+        {/* Product Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:px-32 gap-10">
+          {categoryProducts.map((product) => {
+            const id = product._id?.toString() || product.id;
+            return (
+              <Link
+                key={id}
+                href={`/items/${gender}/${slug}/${id}`}
+                className="group"
+              >
+                <div className="bg-[#EDEDED] aspect-[4/5] relative overflow-hidden rounded-3xl flex items-center justify-center">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    width={220}
+                    height={240}
+                    className="h-[240px] w-[220px] bg-transparent p-5 transform group-hover:scale-105 transition-transform duration-300 rounded-3xl"
+                  />
                 </div>
-              );
-            })}
-          </div>
+                <div className="mt-4 text-center">
+                  <h3 className="text-xl font-medium text-gray-900 group-hover:text-gray-600 transition bebas-font">
+                    {product.name}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
