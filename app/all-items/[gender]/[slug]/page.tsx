@@ -29,7 +29,7 @@ export default function AllItems() {
   const categoryKey = `${gender} ${slug}`;
   const userEmail = user?.email;
 
-  // ✅ Auth0 roles with previous domain
+  // ✅ Using correct Auth0 custom claim domain
   const roles: string[] = Array.isArray(
     user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
   )
@@ -39,23 +39,22 @@ export default function AllItems() {
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
-    if (isAdmin && userEmail) {
-      const fetchAdminProducts = async () => {
+    const fetchProducts = async () => {
+      if (isAdmin) {
         try {
           const response = await fetch(`/api/products?category=${categoryKey}`);
           const data = await response.json();
-          const filtered = data.filter((p: any) => p.email === userEmail);
-          setCategoryProducts(filtered);
+          setCategoryProducts(data); // ✅ Admin sees all products in category
         } catch (err) {
           console.error("Failed to load admin products:", err);
           setCategoryProducts([]);
         }
-      };
-      fetchAdminProducts();
-    } else {
-      setCategoryProducts(staticProducts[categoryKey] || []);
-    }
-  }, [categoryKey, isAdmin, userEmail]);
+      } else {
+        setCategoryProducts(staticProducts[categoryKey] || []);
+      }
+    };
+    fetchProducts();
+  }, [categoryKey, isAdmin]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
