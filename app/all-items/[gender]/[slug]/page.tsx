@@ -28,11 +28,14 @@ export default function AllItems() {
 
   const categoryKey = `${gender} ${slug}`;
   const userEmail = user?.email;
+
+  // ✅ Auth0 roles with previous domain
   const roles: string[] = Array.isArray(
     user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
   )
     ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
     : [];
+
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
@@ -73,6 +76,8 @@ export default function AllItems() {
   };
 
   const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: true,
+    mode: "snap",
     slides: {
       perView: 1,
       spacing: 15,
@@ -91,7 +96,6 @@ export default function AllItems() {
         slides: { perView: 5, spacing: 25 },
       },
     },
-    loop: true,
   });
 
   if (routeLoading || userLoading) return <Loader />;
@@ -181,16 +185,19 @@ export default function AllItems() {
           </button>
 
           {/* Carousel */}
-          <div ref={sliderRef} className="keen-slider px-6 md:px-16">
+          <div
+            ref={sliderRef}
+            className="keen-slider px-4 md:px-8 lg:px-12"
+          >
             {categoryProducts.map((product) => {
               const id = product._id?.toString() || product.id;
               return (
                 <div
                   key={id}
-                  className="keen-slider__slide flex flex-col items-center px-2"
+                  className="keen-slider__slide flex-shrink-0 w-[180px] flex flex-col items-center"
                 >
                   <Link href={`/items/${gender}/${slug}/${id}`}>
-                    <div className="bg-[#EDEDED] w-full max-w-[180px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                    <div className="bg-[#EDEDED] w-[160px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
                       <Image
                         src={product.image}
                         alt={product.name}
