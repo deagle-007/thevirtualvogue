@@ -28,11 +28,14 @@ export default function AllItems() {
 
   const categoryKey = `${gender} ${slug}`;
   const userEmail = user?.email;
+
+  // ✅ Updated to reflect new domain for Auth0 roles
   const roles: string[] = Array.isArray(
-    user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
+    user?.["https://thevirtualvogue.vercel.app/roles"]
   )
-    ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
+    ? user["https://thevirtualvogue.vercel.app/roles"]
     : [];
+
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
@@ -85,7 +88,10 @@ export default function AllItems() {
         slides: { perView: 3, spacing: 25 },
       },
       "(min-width: 1024px)": {
-        slides: { perView: 3, spacing: 30 },
+        slides: { perView: 4, spacing: 25 },
+      },
+      "(min-width: 1280px)": {
+        slides: { perView: 5, spacing: 25 },
       },
     },
     loop: true,
@@ -160,7 +166,7 @@ export default function AllItems() {
         </div>
 
         {/* Carousel Section */}
-        <div className="relative w-full">
+        <div className="relative w-full overflow-hidden max-w-screen-xl mx-auto">
           {/* Left Arrow */}
           <button
             onClick={() => instanceRef.current?.prev()}
@@ -184,10 +190,10 @@ export default function AllItems() {
               return (
                 <div
                   key={id}
-                  className="keen-slider__slide min-w-0 flex flex-col items-center"
+                  className="keen-slider__slide flex flex-col items-center px-2"
                 >
                   <Link href={`/items/${gender}/${slug}/${id}`}>
-                    <div className="bg-[#EDEDED] w-[160px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                    <div className="bg-[#EDEDED] w-full max-w-[180px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
                       <Image
                         src={product.image}
                         alt={product.name}
