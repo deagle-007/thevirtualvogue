@@ -26,7 +26,7 @@ export default function AllItems() {
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categoryKey = ${gender} ${slug};
+  const categoryKey = `${gender} ${slug}`;
   const userEmail = user?.email;
   const roles: string[] = Array.isArray(
     user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
@@ -39,7 +39,7 @@ export default function AllItems() {
     if (isAdmin && userEmail) {
       const fetchAdminProducts = async () => {
         try {
-          const response = await fetch(/api/products?category=${categoryKey});
+          const response = await fetch(`/api/products?category=${categoryKey}`);
           const data = await response.json();
           const filtered = data.filter((p: any) => p.email === userEmail);
           setCategoryProducts(filtered);
@@ -85,7 +85,7 @@ export default function AllItems() {
         slides: { perView: 3, spacing: 25 },
       },
       "(min-width: 1024px)": {
-        slides: { perView: 3, spacing: 30 },
+        slides: { perView: 4, spacing: 30 }, // ✅ updated from 3 to 4
       },
     },
     loop: true,
@@ -186,7 +186,7 @@ export default function AllItems() {
                   key={id}
                   className="keen-slider__slide min-w-0 flex flex-col items-center"
                 >
-                  <Link href={/items/${gender}/${slug}/${id}}>
+                  <Link href={`/items/${gender}/${slug}/${id}`}>
                     <div className="bg-[#EDEDED] w-[160px] h-[210px] relative overflow-hidden rounded-2xl flex items-center justify-center mx-auto shadow-md">
                       <Image
                         src={product.image}
