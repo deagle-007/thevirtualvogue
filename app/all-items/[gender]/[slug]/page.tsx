@@ -18,7 +18,7 @@ import { products as staticProducts } from "@/data/product-data";
 export default function AllItems() {
   const router = useRouter();
   const { gender, slug } = useParams();
-  const { setGarmentImage } = useAppStore();
+  const { setGarmentImage, category, setCategory } = useAppStore();
   const { isLoading: routeLoading } = useProtectedRoute();
   const { user, isLoading: userLoading } = useUser();
 
@@ -29,6 +29,13 @@ export default function AllItems() {
 
   const categoryKey = `${gender} ${slug}`;
 
+  // ✅ Restore Zustand category state from URL if missing
+  useEffect(() => {
+    if (!category && slug) {
+      setCategory(slug);
+    }
+  }, [category, slug, setCategory]);
+
   useEffect(() => {
     const fetchProducts = async () => {
       if (!userLoading && user) {
@@ -38,6 +45,7 @@ export default function AllItems() {
         )
           ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
           : [];
+
         const isAdmin = roles.includes("admin");
 
         if (isAdmin && userEmail) {
