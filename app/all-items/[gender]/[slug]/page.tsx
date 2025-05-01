@@ -28,14 +28,11 @@ export default function AllItems() {
 
   const categoryKey = `${gender} ${slug}`;
   const userEmail = user?.email;
-
-  // ✅ Updated to reflect new domain for Auth0 roles
   const roles: string[] = Array.isArray(
-    user?.["https://thevirtualvogue.vercel.app/roles"]
+    user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
   )
-    ? user["https://thevirtualvogue.vercel.app/roles"]
+    ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
     : [];
-
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
