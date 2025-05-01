@@ -24,35 +24,42 @@ export default function AllItems() {
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categoryKey = `${gender} ${slug}`;
-  const userEmail = user?.email;
-  const roles: string[] = Array.isArray(
-    user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
-  )
-    ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
-    : [];
-  const isAdmin = roles.includes("admin");
 
   useEffect(() => {
-    if (isAdmin && userEmail) {
-      const fetchAdminProducts = async () => {
-        try {
-          const response = await fetch(`/api/products?category=${categoryKey}`);
-          const data = await response.json();
-          const filtered = data.filter((p: any) => p.email === userEmail);
-          setCategoryProducts(filtered);
-        } catch (err) {
-          console.error("Failed to load admin products:", err);
-          setCategoryProducts([]);
+    const fetchProducts = async () => {
+      if (!userLoading && user) {
+        const userEmail = user.email;
+        const roles: string[] = Array.isArray(
+          user?.["https://virtual-fitting-room-eight.vercel.app/roles"]
+        )
+          ? user["https://virtual-fitting-room-eight.vercel.app/roles"]
+          : [];
+        const isAdmin = roles.includes("admin");
+
+        if (isAdmin && userEmail) {
+          try {
+            const response = await fetch(`/api/products?category=${categoryKey}`);
+            const data = await response.json();
+            const filtered = data.filter((p: any) => p.email === userEmail);
+            setCategoryProducts(filtered);
+          } catch (err) {
+            console.error("Failed to load admin products:", err);
+            setCategoryProducts([]);
+          }
+        } else {
+          setCategoryProducts(staticProducts[categoryKey] || []);
         }
-      };
-      fetchAdminProducts();
-    } else {
-      setCategoryProducts(staticProducts[categoryKey] || []);
-    }
-  }, [categoryKey, isAdmin, userEmail]);
+
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [userLoading, user, categoryKey]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -85,13 +92,13 @@ export default function AllItems() {
         slides: { perView: 3, spacing: 25 },
       },
       "(min-width: 1024px)": {
-        slides: { perView: 4, spacing: 30 }, // ✅ updated from 3 to 4
+        slides: { perView: 3, spacing: 30 },
       },
     },
     loop: true,
   });
 
-  if (routeLoading || userLoading) return <Loader />;
+  if (routeLoading || userLoading || loadingProducts) return <Loader />;
 
   return (
     <div className="min-h-screen bg-white">
