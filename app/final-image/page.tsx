@@ -25,15 +25,21 @@ const Page = () => {
     seed,
     number_of_images,
     setGeneratedImage,
-    setCategory, // ✅ Import setter
+    setCategory,
   } = useAppStore();
 
   const [loading, setLoading] = useState(false);
 
-  // ✅ If Zustand category is missing, restore from URL
+  // ✅ Log and set category from URL if not in Zustand
   useEffect(() => {
+    console.log("🔍 URL category received:", urlCategory);
     if (!category && urlCategory) {
-      setCategory(urlCategory === "lower_body" ? "lower_body" : "upper_body");
+      const resolvedCategory =
+        urlCategory === "lower_body" ? "lower_body" : "upper_body";
+      console.log("📥 Setting category in Zustand:", resolvedCategory);
+      setCategory(resolvedCategory);
+    } else {
+      console.log("🧠 Zustand category already set:", category);
     }
   }, [category, urlCategory, setCategory]);
 
@@ -43,6 +49,14 @@ const Page = () => {
       return;
     }
 
+    // ✅ Log before sending to API
+    console.log("🚀 Sending to API:");
+    console.log("   Garment Description:", garment_description);
+    console.log("   Category:", urlCategory);
+    console.log("   Denoise Steps:", denoise_steps);
+    console.log("   Seed:", seed);
+    console.log("   Number of Images:", number_of_images);
+
     const formData = new FormData();
     formData.append("garment_image", garment_image);
     formData.append("human_image", human_image);
@@ -50,7 +64,7 @@ const Page = () => {
       "garment_description",
       garment_description.replace(/"/g, "")
     );
-    formData.append("category", category); // ✅ Now reliably set
+    formData.append("category", urlCategory);
     formData.append("denoise_steps", denoise_steps.toString());
     formData.append("seed", seed.toString());
     formData.append("number_of_images", number_of_images.toString());
@@ -70,7 +84,7 @@ const Page = () => {
         alert("No image received from API!");
       }
     } catch (error) {
-      console.error("Error calling API:", error);
+      console.error("❌ Error calling API:", error);
       alert("Something went wrong! Please try again.");
     } finally {
       setLoading(false);
@@ -93,13 +107,13 @@ const Page = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-6">
           {garment_image ? (
             <div className="flex justify-center items-center flex-col">
               <div className="bg-[#D9D9D9] lg:h-[320px] lg:w-[400px] relative flex justify-center items-center rounded-[70px] shadow-2xl">
                 <Image
                   src={URL.createObjectURL(garment_image)}
-                  alt={"garment"}
+                  alt="garment"
                   height={300}
                   width={300}
                   className="h-[250px] w-auto bg-[#E1E1E1]"
@@ -107,7 +121,9 @@ const Page = () => {
               </div>
             </div>
           ) : (
-            <p className="text-gray-500">No garment image uploaded</p>
+            <p className="text-gray-500 text-center">
+              No garment image uploaded
+            </p>
           )}
 
           {human_image ? (
@@ -115,7 +131,7 @@ const Page = () => {
               <div className="bg-[#D9D9D9] lg:h-[320px] lg:w-[400px] relative flex justify-center items-center rounded-[70px] shadow-2xl">
                 <Image
                   src={URL.createObjectURL(human_image)}
-                  alt={"human"}
+                  alt="human"
                   height={300}
                   width={300}
                   className="h-[250px] w-auto bg-[#E1E1E1]"
@@ -123,20 +139,19 @@ const Page = () => {
               </div>
             </div>
           ) : (
-            <p className="text-gray-500">No human image uploaded</p>
+            <p className="text-gray-500 text-center">No human image uploaded</p>
           )}
         </div>
 
-        {/* API Call Button */}
         {loading ? (
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center mt-10">
             <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-gray-900"></div>
           </div>
         ) : (
           <Button
             onClick={handleApiCall}
             disabled={loading}
-            className={`mt-8 text-white text-lg px-10 py-3 h-[50px] rounded-full shadow-lg ${
+            className={`mt-10 text-white text-lg px-10 py-3 h-[50px] rounded-full shadow-lg ${
               loading
                 ? "bg-gray-500 cursor-not-allowed"
                 : "bg-black hover:bg-black/80"
@@ -150,7 +165,6 @@ const Page = () => {
   );
 };
 
-// Wrap the component with Suspense
 const SuspenseWrapper = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
